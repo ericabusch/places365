@@ -2,6 +2,7 @@
 #
 # by Bolei Zhou
 # last modified by Bolei Zhou, Dec.27, 2017 with latest pytorch and torchvision (upgrade your torchvision please if there is trn.Resize error)
+# Erica Busch modifications Sept 2019
 
 import torch
 from torch.autograd import Variable as V
@@ -47,20 +48,20 @@ with open(file_name) as class_file:
 classes = tuple(classes)
 
 # load the test image
-img_name = '12.jpg'
-if not os.access(img_name, os.W_OK):
-    img_url = 'http://places.csail.mit.edu/demo/' + img_name
-    os.system('wget ' + img_url)
+# loop through my test images
+testdir = '/Users/ericabusch/Desktop/Thesis/getting_started/sample_data/'
+for img_name in os.listdir(testdir):
+    if img_name.endswith(".jpg") or img_name.endswith(".jpeg"):
+        img = Image.open(testdir+img_name)
+        input_img = V(centre_crop(img).unsqueeze(0))
 
-img = Image.open(img_name)
-input_img = V(centre_crop(img).unsqueeze(0))
+        # forward pass
+        logit = model.forward(input_img)
+        h_x = F.softmax(logit, 1).data.squeeze()
+        probs, idx = h_x.sort(0, True)
 
-# forward pass
-logit = model.forward(input_img)
-h_x = F.softmax(logit, 1).data.squeeze()
-probs, idx = h_x.sort(0, True)
+        print('{} model\'s prediction for {}'.format(arch, img_name))
+        # output the top 4 predictions
+        for i in range(4):
+            print('{:.3f} -> {}'.format(probs[i], classes[idx[i]]))
 
-print('{} prediction on {}'.format(arch,img_name))
-# output the prediction
-for i in range(0, 5):
-    print('{:.3f} -> {}'.format(probs[i], classes[idx[i]]))
